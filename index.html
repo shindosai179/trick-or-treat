@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trick or Treat: Haunted Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf3e6; --card:#fffdf8; --ink:#2b1d3a; --muted:#6d5f7a;
+  --orange:#e8731c; --orange-d:#b9560f; --purple:#6b3fa0; --purple-l:#efe6fa;
+  --good:#2f7d4f; --good-l:#e4f4ea; --bad:#b3261e; --bad-l:#fbe7e5; --line:#e6d9c4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif}
+body{min-height:100vh;display:flex;justify-content:center;padding:16px}
+.wrap{width:100%;max-width:760px}
+.pix{font-family:"Press Start 2P",monospace;letter-spacing:.5px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+header h1{font-size:15px;line-height:1.5;margin:0;color:var(--purple)}
+header p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:4px 0 12px}
+.bar i{display:block;height:100%;width:0;background:var(--orange);transition:width .3s}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);padding:18px 20px}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
+.tag{background:var(--purple-l);color:var(--purple);font-weight:800;padding:3px 9px;border-radius:20px;font-size:12px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800;margin:10px 0 3px}
+.claim{font-size:18px;font-weight:800;line-height:1.35}
+.sent{font-size:15px;line-height:1.5;background:#fbf6ec;border-left:4px solid var(--orange);padding:8px 12px;border-radius:4px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+button{font:inherit;cursor:pointer;border:2px solid var(--ink);border-radius:8px;box-shadow:3px 3px 0 var(--ink);padding:12px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s}
+button:hover{transform:translate(-1px,-1px)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+button:disabled{cursor:default;opacity:.45;transform:none}
+.treat{background:#ffe2c6}
+.trick{background:var(--purple-l)}
+.next{background:var(--orange);color:#fff;margin-top:14px;width:100%}
+.reveal{display:none;margin-top:14px;padding:12px 14px;border-radius:8px;font-size:15px;line-height:1.5}
+.reveal.ok{display:block;background:var(--good-l);border:2px solid var(--good)}
+.reveal.no{display:block;background:var(--bad-l);border:2px solid var(--bad)}
+.reveal b.v{display:block;font-size:16px;margin-bottom:4px}
+.end{text-align:center}
+.end .score{font-size:28px;color:var(--orange);margin:12px 0 6px}
+.end .rank{font-size:20px;font-weight:800;margin:6px 0}
+.end p{line-height:1.5}
+.small{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
+svg{display:block;image-rendering:pixelated}
+@media (max-width:480px){.btns{grid-template-columns:1fr}.claim{font-size:16px}header h1{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span id="hdrIcon"></span>
+    <div>
+      <h1 class="pix">TRICK OR TREAT</h1>
+      <p>It's midnight. Nine files are on the supervisor's desk. Is each one proof, or a ghost?</p>
+    </div>
+  </header>
+  <div class="bar"><i id="prog"></i></div>
+  <main id="stage" class="card" aria-live="polite"></main>
+  <div class="small">October edition from the Cyber Risk team. Your score stays in your browser; nobody sees it.</div>
+</div>
+
+<script>
+// Pixel art drawn in code: no image files to host.
+function pixel(rows, colors, size){
+  var w = rows[0].length, h = rows.length, r = '';
+  for (var y=0; y<h; y++) for (var x=0; x<w; x++){
+    var c = colors[rows[y][x]];
+    if (c) r += '<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>';
+  }
+  return '<svg width="'+size+'" height="'+(size*h/w)+'" viewBox="0 0 '+w+' '+h+'" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>';
+}
+var PUMPKIN = ["......g.....",".....gg.....","..oooooooo..",".oooooooooo.","ooKKooooKKoo","ooKKooooKKoo","oooooKKooooo","ooKKKKKKKKoo","oooKoKKoKooo",".oooooooooo.","..oooooooo.."];
+var GHOST = ["...LLLLLL...","..LwwwwwwL..",".LwwwwwwwwL.",".LwKKwwKKwL.",".LwKKwwKKwL.",".LwwwwwwwwL.",".LwwwKKwwwL.",".LwwwwwwwwL.",".LwwwwwwwwL.",".LwLwwLwwLwL",".L.L.LL.L.L."];
+var PC = {g:'#3f7a2a', o:'#e8731c', K:'#3b1d0a'};
+var GC = {L:'#6b3fa0', w:'#ffffff', K:'#2b1d3a'};
+var pumpkin = function(s){ return pixel(PUMPKIN, PC, s); };
+var ghost = function(s){ return pixel(GHOST, GC, s); };
+document.getElementById('hdrIcon').innerHTML = pumpkin(44);
+
+// t: true = Treat (the evidence proves it), false = Trick (a ghost control).
+// Order varied on purpose: X . . X X . X X .
+var Q = [
+ {who:'An insurer', claim:'"Multi-factor authentication is enforced for every administrator."',
+  sent:'The information security policy, freshly signed by the board.', t:false,
+  why:'A policy says what <i>should</i> happen. It proves nothing about what <i>does</i>. A board signature on a ghost is still a ghost. Proof would be the system configuration, or a list of admin accounts showing MFA switched on.'},
+ {who:'A bank', claim:'"We review who has access to our systems every quarter."',
+  sent:'Last quarter\'s review: the full account list, 14 accounts removed, and each manager\'s sign-off with dates.', t:true,
+  why:'Real evidence of a control actually operating: it ran, it found something, and someone acted on it. A review that never removes anyone is the one to worry about.'},
+ {who:'An insurer', claim:'"We found a reportable cyber event on Tuesday morning and told the Authority on Thursday morning."',
+  sent:'The notification email, timestamped.', t:true,
+  why:'Insurers have 72 hours to notify the Authority under their Code. Forty-eight hours is inside the window. Nothing spooky here.'},
+ {who:'A trust company', claim:'"Our backups are tested and we can recover."',
+  sent:'A screenshot of the backup schedule: green ticks every night for a year.', t:false,
+  why:'Green ticks prove the backup <i>ran</i>, not that anything can be <i>restored</i> from it. Plenty of firms have discovered, mid-incident, a year of perfectly scheduled empty files. Proof is a restore test.'},
+ {who:'A digital asset business', claim:'"We confirmed a reportable event on Friday and will notify the Authority on Monday, well inside 72 hours."',
+  sent:'An internal email: "No rush, it\'s the weekend."', t:false,
+  why:'Wrong sector, wrong clock. A digital asset business notifies within <b>24 hours</b>, and the full incident report follows within 14 days. 72 hours is the insurers\' deadline. Mixing them up is the scariest mistake on this desk.'},
+ {who:'An insurer', claim:'"We can bring the claims system back after an outage."',
+  sent:'March restore test: system rebuilt from backup in 6 hours, with a list of three things that broke and who fixed them.', t:true,
+  why:'This is what a treat looks like. It was tested, timed, and honest about what went wrong. A test where nothing broke usually means a test that was not hard enough.'},
+ {who:'A fund administrator', claim:'"Our data centre has moved to the cloud, so cyber resilience is now the provider\'s responsibility."',
+  sent:'The cloud contract and a glossy brochure.', t:false,
+  why:'Outsourcing moves the servers, not the accountability. The board still answers for the outcome, and has to show it oversees the provider. You can outsource the haunted house, not the haunting.'},
+ {who:'A bank', claim:'"Our cyber programme was independently assured by internal audit."',
+  sent:'The audit report. The auditor\'s previous role: designing those same controls.', t:false,
+  why:'Marking your own homework is not independent assurance. The third line has to be genuinely separate from what it reviews, or it is only a costume.'},
+ {who:'A digital asset business', claim:'"We weren\'t sure whether this event was reportable, so we phoned the Authority to ask."',
+  sent:'The call note, timed within the hour.', t:true,
+  why:'Exactly right. When in doubt, consult the Authority. Nobody has ever been haunted for asking too early.'}
+];
+
+var RANKS = [
+  [0,'Lost your head','The ghosts had a field day. Have another go: the explanations are the point.'],
+  [4,'Apprentice ghost hunter','You can spot a ghost in good light. Some still slipped past.'],
+  [7,'Seasoned exorcist','Very few paper controls get past you.'],
+  [9,'Chief exorcist','Nine out of nine. Not a single ghost control made it past your desk.']
+];
+
+var i = 0, score = 0, stage = document.getElementById('stage'), prog = document.getElementById('prog');
+
+function show(){
+  var q = Q[i];
+  prog.style.width = (i/Q.length*100)+'%';
+  stage.innerHTML =
+    '<div class="meta"><span class="pix" style="font-size:10px">FILE '+(i+1)+' / '+Q.length+'</span><span class="tag">'+q.who+'</span></div>'+
+    '<div class="label">They claim</div><div class="claim">'+q.claim+'</div>'+
+    '<div class="label">What they sent</div><div class="sent">'+q.sent+'</div>'+
+    '<div class="btns">'+
+      '<button class="treat" data-v="1">'+pumpkin(30)+'<span>Treat<br><small style="font-weight:700">it\'s real</small></span></button>'+
+      '<button class="trick" data-v="0">'+ghost(30)+'<span>Trick<br><small style="font-weight:700">it\'s a ghost</small></span></button>'+
+    '</div><div class="reveal" id="rev"></div>';
+  stage.querySelectorAll('.btns button').forEach(function(b){ b.onclick = function(){ answer(b.dataset.v==='1'); }; });
+}
+
+function answer(pick){
+  var q = Q[i], right = pick === q.t;
+  if (right) score++;
+  stage.querySelectorAll('.btns button').forEach(function(b){ b.disabled = true; });
+  var rev = document.getElementById('rev');
+  rev.className = 'reveal ' + (right ? 'ok' : 'no');
+  rev.innerHTML = '<b class="v">'+(right ? 'Correct! ' : 'Not quite. ')+'It\'s a '+(q.t ? 'Treat' : 'Trick')+'.</b>'+q.why+
+    '<button class="next" id="nx">'+(i < Q.length-1 ? 'Next file' : 'See your rank')+'</button>';
+  document.getElementById('nx').onclick = function(){ i++; i < Q.length ? show() : end(); };
+  document.getElementById('nx').focus();
+}
+
+function end(){
+  prog.style.width = '100%';
+  var r = RANKS[0];
+  RANKS.forEach(function(x){ if (score >= x[0]) r = x; });
+  stage.innerHTML = '<div class="end">'+
+    '<div style="display:flex;justify-content:center;gap:10px">'+pumpkin(48)+ghost(48)+pumpkin(48)+'</div>'+
+    '<div class="score pix">'+score+' / '+Q.length+'</div>'+
+    '<div class="rank">'+r[1]+'</div><p>'+r[2]+'</p>'+
+    '<p style="color:var(--muted);font-size:14px">The lesson behind every file: <b>a document saying a control exists is not proof that it works.</b> That is the question the Cyber Risk team asks regulated entities, all year round.</p>'+
+    '<button class="next" id="again">Play again</button></div>';
+  document.getElementById('again').onclick = function(){ i = 0; score = 0; show(); };
+}
+
+show();
+</script>
+</body>
+</html>
