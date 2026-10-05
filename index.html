@@ -46,6 +46,21 @@ button:disabled{cursor:default;opacity:.45;transform:none}
 .end p{line-height:1.5}
 .small{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
 svg{display:block;image-rendering:pixelated}
+/* Wrong answer: card shakes, screen dims purple, a ghost swoops across shouting BOO */
+.card.shake{animation:shake .5s}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px) rotate(-1deg)}30%{transform:translateX(9px) rotate(1deg)}45%{transform:translateX(-7px)}60%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.boo{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden;animation:dim 1.5s forwards}
+@keyframes dim{0%{background:rgba(43,29,58,0)}15%{background:rgba(43,29,58,.35)}70%{background:rgba(43,29,58,.2)}100%{background:rgba(43,29,58,0)}}
+.boo .g{position:absolute;top:28%;left:-220px;animation:swoop 1.5s ease-in-out forwards}
+@keyframes swoop{0%{transform:translate(0,40px) rotate(-12deg) scale(.6);opacity:0}15%{opacity:1}45%{transform:translate(calc(50vw + 130px),-30px) rotate(8deg) scale(1.25)}60%{transform:translate(calc(50vw + 150px),-20px) rotate(-6deg) scale(1.25)}100%{transform:translate(calc(100vw + 460px),30px) rotate(-10deg) scale(.8);opacity:.8}}
+.boo .t{position:absolute;left:50%;top:18%;font-size:54px;color:#fff;text-shadow:4px 4px 0 var(--orange),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink);animation:booText 1.5s forwards}
+@keyframes booText{0%{transform:translate(-50%,0) scale(0);opacity:0}25%{transform:translate(-50%,0) scale(1.35) rotate(-6deg);opacity:1}40%{transform:translate(-50%,0) scale(1) rotate(3deg)}75%{opacity:1}100%{transform:translate(-50%,-30px) scale(1);opacity:0}}
+/* Right answer: candy bursts from the button, the chosen button bounces */
+.candy{position:fixed;width:12px;height:12px;pointer-events:none;z-index:9;box-shadow:2px 2px 0 rgba(43,29,58,.5);animation:fly 1s cubic-bezier(.15,.7,.35,1) forwards}
+@keyframes fly{70%{opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+button.pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.12) rotate(-2deg)}65%{transform:scale(.96)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.card.shake,button.pop,.boo .g{animation:none}.boo .g,.candy{display:none}}
 @media (max-width:480px){.btns{grid-template-columns:1fr}.claim{font-size:16px}header h1{font-size:12px}}
 </style>
 </head>
@@ -133,12 +148,43 @@ function show(){
       '<button class="treat" data-v="1">'+pumpkin(30)+'<span>Treat<br><small style="font-weight:700">it\'s real</small></span></button>'+
       '<button class="trick" data-v="0">'+ghost(30)+'<span>Trick<br><small style="font-weight:700">it\'s a ghost</small></span></button>'+
     '</div><div class="reveal" id="rev"></div>';
-  stage.querySelectorAll('.btns button').forEach(function(b){ b.onclick = function(){ answer(b.dataset.v==='1'); }; });
+  stage.querySelectorAll('.btns button').forEach(function(b){ b.onclick = function(){ answer(b.dataset.v==='1', b); }; });
 }
 
-function answer(pick){
+function boo(){
+  var o = document.createElement('div');
+  o.className = 'boo';
+  o.innerHTML = '<div class="g">'+ghost(170)+'</div><div class="t pix">BOO!</div>';
+  document.body.appendChild(o);
+  stage.classList.remove('shake'); void stage.offsetWidth; stage.classList.add('shake');
+  setTimeout(function(){ o.remove(); stage.classList.remove('shake'); }, 1600);
+}
+
+function candy(x, y, n){
+  var cols = ['#e8731c','#6b3fa0','#3f7a2a','#f6c344','#ffffff'];
+  for (var k=0; k<n; k++){
+    var c = document.createElement('i'), a = Math.random()*Math.PI*2, d = 80 + Math.random()*160;
+    c.className = 'candy';
+    c.style.left = x+'px'; c.style.top = y+'px';
+    c.style.background = cols[k % cols.length];
+    c.style.setProperty('--dx', Math.cos(a)*d+'px');
+    c.style.setProperty('--dy', Math.sin(a)*d*0.7 + 120 +'px');   // a little gravity
+    c.style.setProperty('--r', (Math.random()*720-360)+'deg');
+    document.body.appendChild(c);
+    setTimeout(function(e){ return function(){ e.remove(); }; }(c), 1100);
+  }
+}
+
+function answer(pick, btn){
   var q = Q[i], right = pick === q.t;
-  if (right) score++;
+  if (right){
+    score++;
+    var r = btn.getBoundingClientRect();
+    candy(r.left + r.width/2, r.top + r.height/2, 26);
+    btn.classList.add('pop');
+  } else {
+    boo();
+  }
   stage.querySelectorAll('.btns button').forEach(function(b){ b.disabled = true; });
   var rev = document.getElementById('rev');
   rev.className = 'reveal ' + (right ? 'ok' : 'no');
@@ -159,6 +205,12 @@ function end(){
     '<p style="color:var(--muted);font-size:14px">The lesson behind every file: <b>a document saying a control exists is not proof that it works.</b> That is the question the Cyber Risk team asks regulated entities, all year round.</p>'+
     '<button class="next" id="again">Play again</button></div>';
   document.getElementById('again').onclick = function(){ i = 0; score = 0; show(); };
+  if (score >= 7){
+    var w = document.documentElement.clientWidth;
+    [0.2, 0.5, 0.8].forEach(function(f, n){ setTimeout(function(){ candy(w*f, 120, 30); }, n*250); });
+  } else if (score < 4){
+    boo();
+  }
 }
 
 show();
