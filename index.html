@@ -99,37 +99,37 @@ document.getElementById('hdrIcon').innerHTML = pumpkin(44);
 // t: true = Treat (the evidence proves it), false = Trick (a ghost control).
 // Order varied on purpose: X . . X X . X X .
 var Q = [
- {who:'An insurer', claim:'"Multi-factor authentication is enforced for every administrator."',
-  sent:'The information security policy, freshly signed by the board.', t:false,
-  why:'A policy says what <i>should</i> happen. It proves nothing about what <i>does</i>. A board signature on a ghost is still a ghost. Proof would be the system configuration, or a list of admin accounts showing MFA switched on.'},
- {who:'A bank', claim:'"We review who has access to our systems every quarter."',
-  sent:'Last quarter\'s review: the full account list, 14 accounts removed, and each manager\'s sign-off with dates.', t:true,
-  why:'Real evidence of a control actually operating: it ran, it found something, and someone acted on it. A review that never removes anyone is the one to worry about.'},
- {who:'An insurer', claim:'"We found a reportable cyber event on Tuesday morning and told the Authority on Thursday morning."',
+ {title:'The Locked Crypt', who:'An insurer', claim:'"Every administrator\'s crypt is sealed with multi-factor authentication."',
+  sent:'The spell book: the information security policy, signed by the board.', t:false,
+  why:'A spell written down is not a spell cast. The policy proves intent, not that MFA is switched on. Proof would be the system configuration, or the list of admin accounts showing MFA enabled.'},
+ {title:'Zombie Accounts', who:'A bank', claim:'"We check every quarter who still has keys to the castle."',
+  sent:'The quarterly access review: 14 accounts of people who had left, still walking around with access. All removed, each signed off by a manager with a date.', t:true,
+  why:'Zombie accounts are real, and finding them is proof the control works. A review that never finds a single zombie is the scary one.'},
+ {title:'Before the Clock Strikes', who:'An insurer', claim:'"We confirmed a reportable cyber event at 9am Tuesday and notified the Authority at 9am Thursday."',
   sent:'The notification email, timestamped.', t:true,
   why:'Insurers have 72 hours to notify the Authority under their Code. Forty-eight hours is inside the window. Nothing spooky here.'},
- {who:'A trust company', claim:'"Our backups are tested and we can recover."',
-  sent:'A screenshot of the backup schedule: green ticks every night for a year.', t:false,
-  why:'Green ticks prove the backup <i>ran</i>, not that anything can be <i>restored</i> from it. Plenty of firms have discovered, mid-incident, a year of perfectly scheduled empty files. Proof is a restore test.'},
- {who:'A digital asset business', claim:'"We confirmed a reportable event on Friday and will notify the Authority on Monday, well inside 72 hours."',
+ {title:'The Mummy\'s Backup', who:'A trust company', claim:'"Everything is preserved. We wrap it up every single night."',
+  sent:'A screenshot of the backup schedule: a year of green ticks.', t:false,
+  why:'Wrapped is not the same as able to walk out of the tomb, and nobody has ever unwrapped one. Green ticks prove the backup ran, not that anything can be restored. Proof is a restore test.'},
+ {title:'Wrong Moon', who:'A digital asset business', claim:'"We confirmed a reportable event on Friday. We\'ll notify the Authority on Monday, well inside 72 hours."',
   sent:'An internal email: "No rush, it\'s the weekend."', t:false,
-  why:'Wrong sector, wrong clock. A digital asset business notifies within <b>24 hours</b>, and the full incident report follows within 14 days. 72 hours is the insurers\' deadline. Mixing them up is the scariest mistake on this desk.'},
- {who:'An insurer', claim:'"We can bring the claims system back after an outage."',
-  sent:'March restore test: system rebuilt from backup in 6 hours, with a list of three things that broke and who fixed them.', t:true,
-  why:'This is what a treat looks like. It was tested, timed, and honest about what went wrong. A test where nothing broke usually means a test that was not hard enough.'},
- {who:'A fund administrator', claim:'"Our data centre has moved to the cloud, so cyber resilience is now the provider\'s responsibility."',
+  why:'Werewolves follow the full moon. A digital asset business follows a <b>24-hour</b> clock, and the full incident report follows within 14 days. 72 hours is the insurers\' deadline. Mixing them up is the scariest mistake on this desk.'},
+ {title:'Back From the Dead', who:'An insurer', claim:'"We can raise the claims system from the dead after an outage."',
+  sent:'The March restore test: rebuilt from backup in 6 hours, with a list of three things that broke and who fixed them.', t:true,
+  why:'A real resurrection: tested, timed, and honest about the missing limbs. A test where nothing broke usually means a test that was not hard enough.'},
+ {title:'The Haunting Moved Out', who:'A fund administrator', claim:'"We moved to the cloud, so the ghosts are the provider\'s problem now."',
   sent:'The cloud contract and a glossy brochure.', t:false,
-  why:'Outsourcing moves the servers, not the accountability. The board still answers for the outcome, and has to show it oversees the provider. You can outsource the haunted house, not the haunting.'},
- {who:'A bank', claim:'"Our cyber programme was independently assured by internal audit."',
+  why:'You can outsource the haunted house, not the haunting. Accountability stays with the board, which has to show it oversees the provider.'},
+ {title:'The Vampire\'s Mirror', who:'A bank', claim:'"Our cyber programme was independently assured by internal audit."',
   sent:'The audit report. The auditor\'s previous role: designing those same controls.', t:false,
-  why:'Marking your own homework is not independent assurance. The third line has to be genuinely separate from what it reviews, or it is only a costume.'},
- {who:'A digital asset business', claim:'"We weren\'t sure whether this event was reportable, so we phoned the Authority to ask."',
+  why:'A vampire cannot see himself in a mirror, and an auditor cannot independently review his own work. The third line has to be genuinely separate from what it checks.'},
+ {title:'The Midnight Call', who:'A digital asset business', claim:'"We weren\'t sure whether this event was reportable, so we phoned the Authority to ask."',
   sent:'The call note, timed within the hour.', t:true,
-  why:'Exactly right. When in doubt, consult the Authority. Nobody has ever been haunted for asking too early.'}
+  why:'Exactly right. When in doubt, consult the Authority. Nobody gets haunted for calling early.'}
 ];
 
 var RANKS = [
-  [0,'Lost your head','The ghosts had a field day. Have another go: the explanations are the point.'],
+  [0,'Possessed by paperwork','The ghosts had a field day. Have another go: the explanations are the point.'],
   [4,'Apprentice ghost hunter','You can spot a ghost in good light. Some still slipped past.'],
   [7,'Seasoned exorcist','Very few paper controls get past you.'],
   [9,'Chief exorcist','Nine out of nine. Not a single ghost control made it past your desk.']
@@ -142,6 +142,7 @@ function show(){
   prog.style.width = (i/Q.length*100)+'%';
   stage.innerHTML =
     '<div class="meta"><span class="pix" style="font-size:10px">FILE '+(i+1)+' / '+Q.length+'</span><span class="tag">'+q.who+'</span></div>'+
+    '<div class="pix" style="font-size:13px;color:var(--purple);margin-bottom:6px;line-height:1.5">'+q.title.toUpperCase()+'</div>'+
     '<div class="label">They claim</div><div class="claim">'+q.claim+'</div>'+
     '<div class="label">What they sent</div><div class="sent">'+q.sent+'</div>'+
     '<div class="btns">'+
