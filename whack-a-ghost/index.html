@@ -62,10 +62,12 @@ header h1{font-size:15px;margin:0;color:var(--purple);line-height:1.4}
 .bit{position:absolute;width:9px;height:9px;z-index:5;pointer-events:none;animation:bit .6s ease-out forwards}
 @keyframes bit{to{transform:translate(var(--dx),var(--dy));opacity:0}}
 
-.panel{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(251,243,230,.92);padding:16px}
+.panel{position:relative;grid-column:1/-1;z-index:10;display:flex;justify-content:center;padding:14px 0 24px}
+.field.menu .hole{display:none}
 .panel[hidden]{display:none}
-.box{background:var(--card);border:2px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);padding:18px 20px;max-width:560px;width:100%;max-height:100%;overflow:auto}
+.box{background:var(--card);border:2px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);padding:18px 20px;max-width:640px;width:100%}
 .box h2{margin:0 0 10px;font-size:16px;color:var(--purple);line-height:1.5}
+.why{font-size:15px;line-height:1.45;margin:0 0 12px}
 .rules{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;font-size:15px;line-height:1.35}
 .btn{font:inherit;font-weight:800;font-size:16px;cursor:pointer;background:var(--orange);color:#fff;border:2px solid var(--ink);border-radius:8px;
   box-shadow:3px 3px 0 var(--ink);padding:11px 18px;margin-top:14px;width:100%}
@@ -77,6 +79,8 @@ header h1{font-size:15px;margin:0;color:var(--purple);line-height:1.4}
 .review{font-size:14px;line-height:1.4;margin:6px 0 0;padding-left:18px}
 .review li{margin-bottom:6px}
 .lesson{font-size:14px;color:var(--muted);margin-top:8px}
+.decoder{margin-top:10px;min-height:46px;background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:7px 12px;font-size:14px;line-height:1.35;color:var(--muted)}
+.decoder b.ok{color:var(--good)} .decoder b.no{color:var(--bad)}
 .foot{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
 svg{display:block;image-rendering:pixelated}
 
@@ -114,6 +118,7 @@ svg{display:block;image-rendering:pixelated}
     <span class="moon" id="moon"></span>
     <div class="panel" id="panel"></div>
   </div>
+  <div class="decoder" id="decoder">Read each label. The real-life meaning appears here after you make your call.</div>
   <div class="foot">October edition from the Cyber Risk team. Your score stays in your browser; nobody sees it.</div>
 </div>
 
@@ -145,41 +150,42 @@ document.getElementById('moon').innerHTML = art('moon', 46);
 
 // ---------- the files ----------
 // k: g = ghost control (whack it), r = real evidence (leave it), p = golden phone (hit it)
+// Labels are plain-English Halloween analogies. The real-world meaning (w) is shown only after the call.
 var ITEMS = [
- {k:'g', t:'Policy: MFA on for all admins', w:'A policy is intent, not proof. Ask for the MFA configuration export.'},
- {k:'g', t:'Backup dashboard: all green', w:'Green means the backup ran, not that it restores. Ask for a restore test.'},
- {k:'g', t:'"We review access regularly"', w:'"Regularly", with no record, is a ghost. Ask for the last review and what it removed.'},
- {k:'g', t:'Incident plan: never tested', w:'An untested plan is a story, not a capability.'},
- {k:'g', t:'Pen test booked for next year', w:'A booking is not a result.'},
- {k:'g', t:'Board is "aware" of cyber risk', w:'Awareness is not oversight. Look for minutes showing challenge and decisions.'},
- {k:'g', t:'"The cloud provider handles it"', w:'You can outsource the servers, not the accountability.'},
- {k:'g', t:'Audited by the control designer', w:'Marking your own homework is not independent assurance.'},
- {k:'g', t:'Vendor says they are secure', w:'A vendor\'s word is not assurance. Ask for their evidence.'},
- {k:'g', t:'Encryption "where possible"', w:'"Where possible" usually means "not everywhere".'},
- {k:'g', t:'DAB: notify within 72 hours', w:'Wrong clock. A digital asset business notifies within 24 hours. 72 is the insurers\' deadline.'},
- {k:'g', t:'Asset list "mostly complete"', w:'You cannot protect what is not on the list.'},
- {k:'g', t:'Training slides on the intranet', w:'Slides posted is not people trained. Look for results.'},
- {k:'g', t:'Continuity plan last updated 2019', w:'A plan nobody has touched in years is a ghost.'},
- {k:'g', t:'Risk register: blank template', w:'A template is not a risk assessment.'},
- {k:'g', t:'Unsure if reportable? Wait and see', w:'When in doubt, consult the Authority. Waiting is the ghost.'},
- {k:'g', t:'Firewall rules "reviewed"', w:'Reviewed by whom, and when? No record, no review.'},
- {k:'g', t:'Annual review: "ongoing" since May', w:'Ongoing is not finished. Ask for the completed review.'},
- {k:'r', t:'MFA export: 41 of 41 admins', w:'Evidence pulled from the system itself. That one was real.'},
- {k:'r', t:'Restore test: back in 6 hours', w:'Tested, timed and documented. That is operating evidence.'},
- {k:'r', t:'Access review: 14 leavers removed', w:'It ran, it found zombie accounts, someone acted. Real.'},
- {k:'r', t:'Tabletop exercise: 5 actions logged', w:'Exercised, with follow-up actions. Real.'},
- {k:'r', t:'Pen test: 3 findings, all closed', w:'Tested, and the fixes are tracked to closure. Real.'},
- {k:'r', t:'Board minutes: cyber risk debated', w:'Recorded challenge and decisions: real oversight.'},
- {k:'r', t:'Provider assurance report reviewed', w:'Oversight of the outsourcer, on file. Real.'},
- {k:'r', t:'Independent audit: 4 findings', w:'Separate from what it checks. A real third line.'},
- {k:'r', t:'Insurer notified in 48 hours', w:'Insurers have 72 hours. Inside the window. Real.'},
- {k:'r', t:'DAB notified within 20 hours', w:'Inside the 24-hour clock. Real.'},
- {k:'r', t:'Phishing test: clicks down to 4%', w:'Measured over time: training that works. Real.'},
- {k:'r', t:'Failover drill passed in March', w:'Tested continuity, with a date. Real.'},
- {k:'r', t:'Risk register: owners and dates', w:'Named owners and deadlines make it a live register. Real.'},
- {k:'r', t:'Patch report: 97% within 30 days', w:'Measured from the systems, not the policy. Real.'}
+ {k:'g', t:'Rulebook: every crypt needs two keys', w:'A rulebook is not a lock. Real life: a policy saying logins need a second check (a code on your phone) proves nothing until you see the system settings.'},
+ {k:'g', t:'Mummies wrapped every night: all ticked', w:'Wrapped is not the same as able to walk out. Real life: backups that ran are not backups that restore. Ask for a restore test.'},
+ {k:'g', t:'"We count the zombies regularly"', w:'"Regularly", with no tally sheet, is a ghost. Real life: an access review with no record of who was removed.'},
+ {k:'g', t:'Vampire plan, never rehearsed', w:'A plan nobody has practised is a story. Real life: an incident response plan that has never been tested.'},
+ {k:'g', t:'Ghost hunters booked for next year', w:'A booking is not a result. Real life: a security test that has not happened yet.'},
+ {k:'g', t:'The council has "heard of" the curse', w:'Hearing is not overseeing. Real life: a board "aware" of cyber risk, with no minutes showing it challenged anything.'},
+ {k:'g', t:'"The landlord handles our ghosts"', w:'You can rent out the house, not the haunting. Real life: outsourcing to a cloud provider does not move accountability.'},
+ {k:'g', t:'The witch who cast the spell checked it', w:'Marking your own homework. Real life: an auditor reviewing controls they designed is not independent.'},
+ {k:'g', t:'The coffin seller swears it is sealed', w:'A seller\'s word is not proof. Real life: a supplier\'s say-so instead of their assurance report.'},
+ {k:'g', t:'Garlic on most of the windows', w:'Vampires use the window you missed. Real life: data protected "where possible" means not everywhere.'},
+ {k:'g', t:'Digital asset curse? Report in 72 hours', w:'Wrong clock. Real life: a digital asset business notifies the Authority within 24 hours. 72 hours is the insurers\' deadline.'},
+ {k:'g', t:'Graveyard map: "mostly complete"', w:'The ghost lives in the grave missing from the map. Real life: an incomplete list of the systems you have to protect.'},
+ {k:'g', t:'Ghost-spotting leaflet pinned up', w:'Pinned up is not learned. Real life: training slides posted, no sign anyone took them in.'},
+ {k:'g', t:'Escape plan last updated 2019', w:'Real life: a business continuity plan nobody has touched in years.'},
+ {k:'g', t:'Monster list: blank template', w:'Real life: a risk register with no risks, owners or dates in it.'},
+ {k:'g', t:'Strange noise? Wait and see', w:'When in doubt, call. Real life: if you are unsure whether an incident is reportable, consult the Authority.'},
+ {k:'g', t:'Castle gate rules "checked"', w:'Checked by whom, and when? Real life: network access rules "reviewed" with no record of it.'},
+ {k:'g', t:'Annual séance: "ongoing" since May', w:'Ongoing is not finished. Real life: an annual review that never gets completed.'},
+ {k:'r', t:'Gatekeeper\'s log: all 41 doors double-locked', w:'Proof from the gate itself. Real life: a system report showing the second login check is on for every administrator.'},
+ {k:'r', t:'Mummy unwrapped, walked out in 6 hours', w:'Real life: a restore test from backup, timed and written up. That is proof it works.'},
+ {k:'r', t:'Zombie count: 14 found and removed', w:'Real life: an access review that found 14 people who had left and removed them, signed off.'},
+ {k:'r', t:'Vampire drill run: 5 lessons logged', w:'Real life: an incident exercise, with follow-up actions recorded.'},
+ {k:'r', t:'Ghost hunters found 3 holes: all sealed', w:'Real life: a security test whose findings were fixed and tracked to closure.'},
+ {k:'r', t:'Council minutes: the curse was debated', w:'Real life: board minutes showing real challenge on cyber risk.'},
+ {k:'r', t:'Landlord\'s inspection report checked', w:'Real life: reviewing the outsourced provider\'s assurance report. Oversight on file.'},
+ {k:'r', t:'Outside witch-finder: 4 findings', w:'Real life: an independent audit, separate from what it checks.'},
+ {k:'r', t:'Insurer reported the curse in 48 hours', w:'Real life: insurers have 72 hours to notify the Authority. Inside the window.'},
+ {k:'r', t:'Digital asset firm reported in 20 hours', w:'Real life: inside the digital asset 24-hour clock.'},
+ {k:'r', t:'Fake-ghost test: only 4% fooled', w:'Real life: phishing tests showing fewer staff clicking. Training that works.'},
+ {k:'r', t:'Escape drill passed in March', w:'Real life: a business continuity test, with a date and a result.'},
+ {k:'r', t:'Monster list: every one has a hunter', w:'Real life: a risk register with named owners and deadlines.'},
+ {k:'r', t:'Cracks in the walls: 97% filled in a month', w:'Real life: a report from the systems showing security fixes applied on time.'}
 ];
-var PHONE = {k:'p', t:'Unsure? Call the Authority', w:'When in doubt, consult the Authority. Always the right call.'};
+var PHONE = {k:'p', t:'Strange noise? Call the Authority', w:'When in doubt, consult the Authority. Always the right call.'};
 
 // ---------- game state ----------
 var GAME_MS = 45000, HOLES = 6;
@@ -260,20 +266,26 @@ function clearHole(h, delay){
   }, delay);
 }
 
+function decode(ok, it){
+  var d = document.getElementById('decoder');
+  d.innerHTML = '<b class="'+(ok ? 'ok' : 'no')+'">'+(ok ? 'Right call.' : 'Wrong call.')+'</b> "'+it.t+'" was '+(it.k === 'g' ? 'ghost evidence' : it.k === 'r' ? 'real evidence' : 'the right call')+'. '+it.w;
+}
+
 function whack(h){
   if (!running || !h.item || h.done) return;
   h.done = true; clearTimeout(h.timer);
   var it = h.item;
+  decode(it.k !== 'r', it);
   if (it.k === 'g'){
     combo++; mult = Math.min(3, 1 + Math.floor(combo/3));
     var pts = 10*mult; score += pts; stats.caught++;
-    reveal(h, 'ghost', 'GHOST!', 'good');
+    reveal(h, 'ghost', 'GHOST EVIDENCE', 'good');
     h.pit.querySelector('.spr svg').classList.add('flyoff');
     float(h, '+'+pts, 'good'); puff(h, ['#6b3fa0','#ffffff','#efe6fa']);
   } else if (it.k === 'r'){
     combo = 0; mult = 1; score = Math.max(0, score-15); stats.wrongWhack++;
     mistakes.push({how:'You whacked real evidence', it:it});
-    reveal(h, 'pumpkin', 'IT WAS REAL', 'bad');
+    reveal(h, 'pumpkin', 'REAL EVIDENCE!', 'bad');
     float(h, '-15', 'bad');
     h.el.classList.add('shake','flash'); setTimeout(function(){ h.el.classList.remove('shake','flash'); }, 450);
   } else {
@@ -288,10 +300,11 @@ function escape(h){
   if (!running || !h.item || h.done) return;
   h.done = true;
   var it = h.item;
+  if (it.k !== 'r') decode(false, it);
   if (it.k === 'g'){
     combo = 0; mult = 1; score = Math.max(0, score-5); stats.escaped++;
-    mistakes.push({how:'A ghost slipped past your desk', it:it});
-    reveal(h, 'ghost', 'GOT AWAY', 'bad');
+    mistakes.push({how:'Ghost evidence slipped past you', it:it});
+    reveal(h, 'ghost', 'GHOST GOT AWAY', 'bad');
     h.pit.querySelector('.spr svg').classList.add('flyoff');
     float(h, '-5', 'bad');
     clearHole(h, 650);
@@ -318,7 +331,8 @@ function start(){
   score = 0; combo = 0; mult = 1; mistakes = [];
   stats = {caught:0, escaped:0, wrongWhack:0, accepted:0, called:0, missedCall:0};
   holes.forEach(function(h){ clearTimeout(h.timer); h.pit.innerHTML = ''; h.item = null; h.done = true; });
-  panel.hidden = true; running = true; t0 = Date.now(); hud(); tick();
+  document.getElementById('decoder').textContent = 'Read each label. The real-life meaning appears here after you make your call.';
+  panel.hidden = true; field.classList.remove('menu'); running = true; t0 = Date.now(); hud(); tick();
   clock = setInterval(tick, 100);
   spawnTimer = setTimeout(spawn, 500);
 }
@@ -349,25 +363,30 @@ function end(){
     '<h2 class="pix">CASE REVIEW</h2>'+
     '<div class="big pix">'+score+'</div>'+
     '<div class="rank">'+r[1]+' &middot; '+acc+'% right calls</div><div>'+r[2]+'</div>'+
-    '<div class="chips"><span>'+pl(stats.caught,'ghost')+' caught</span><span>'+pl(stats.accepted,'real file')+' accepted</span>'+
-      '<span>'+pl(stats.escaped,'ghost')+' escaped</span><span>'+pl(stats.wrongWhack,'real file')+' whacked</span>'+
+    '<div class="chips"><span>Ghost evidence caught: '+stats.caught+'</span><span>Real evidence spared: '+stats.accepted+'</span>'+
+      '<span>Ghost evidence missed: '+stats.escaped+'</span><span>Real evidence whacked: '+stats.wrongWhack+'</span>'+
       (stats.called ? '<span>'+pl(stats.called,'right call')+'</span>' : '')+'</div>'+
     (review.length ? '<b>Files to look at again</b>' : '')+list+
-    '<div class="lesson">The question behind every file: <b>does this prove the control works, or only say that it should?</b></div>'+
+    '<div class="lesson">The question behind every file: <b>is this real evidence that it works, or ghost evidence that only says it should?</b></div>'+
     '<button class="btn" id="go">Play again</button></div>';
-  panel.hidden = false;
+  panel.hidden = false; field.classList.add('menu');
   document.getElementById('go').onclick = start;
 }
 
 panel.innerHTML = '<div class="box">'+
-  '<h2 class="pix">MIDNIGHT. THE FILES ARE RISING.</h2>'+
+  '<h2 class="pix">TONIGHT, YOU DO OUR JOB</h2>'+
+  '<p class="why">The companies we supervise tell us how well they are protected against cyber attacks. '+
+  'Some of what they send is <b>real evidence</b>: proof that a protection actually works. Some is <b>ghost evidence</b>: just a promise, like a "Beware of the dog" sign with no dog behind the gate. '+
+  'Our job is telling the two apart. For the next 45 seconds, it\'s yours.</p>'+
   '<div class="rules">'+
-    art('sheet', 34)+'<span>Every file climbs out of its grave <b>under a sheet</b>. Read the label.</span>'+
-    art('ghost', 34)+'<span><b>Whack the ghosts:</b> claims and paperwork with no proof the control works.</span>'+
-    art('pumpkin', 34)+'<span><b>Leave real evidence alone.</b> Whack it and you lose points.</span>'+
-    art('phone', 34)+'<span><b>Golden phone?</b> Hit it. When in doubt, consult the Authority.</span>'+
+    art('sheet', 34)+'<span>Files climb out of the graves <b>under a sheet</b>. Read each label.</span>'+
+    art('ghost', 34)+'<span><b>Ghost evidence?</b> A promise, a plan or a "trust us". <b>Whack it!</b></span>'+
+    art('pumpkin', 34)+'<span><b>Real evidence?</b> Proof that something works. <b>Leave it alone</b>, or you lose points.</span>'+
+    art('phone', 34)+'<span><b>Golden phone?</b> Hit it. A company that is unsure should always call us.</span>'+
   '</div>'+
+  '<p class="why" style="margin:10px 0 0">After each call, the bar under the graveyard tells you what the spooky label means in real life.</p>'+
   '<button class="btn" id="go">Start: 45 seconds</button></div>';
+field.classList.add('menu');
 document.getElementById('go').onclick = start;
 </script>
 </body>
