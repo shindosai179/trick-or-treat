@@ -30,6 +30,7 @@ header h1{font-size:15px;margin:0;color:var(--purple);line-height:1.4}
 .field{position:relative;border:2px solid var(--ink);border-radius:10px;box-shadow:4px 4px 0 var(--ink);overflow:hidden;
   background:linear-gradient(#eadff5 0,#f7efe3 55%,#f7efe3 100%);padding:10px 10px 0;
   display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px}
+.field.slow{background:linear-gradient(#d9e8f7 0,#eef4fb 55%,#eef4fb 100%)}
 .moon{position:absolute;right:22px;top:14px;opacity:.9}
 .hole{position:relative;height:196px}
 .pit{position:absolute;left:0;right:0;top:0;bottom:34px;overflow:hidden}
@@ -185,12 +186,12 @@ var ITEMS = [
  {k:'r', t:'Monster list: every one has a hunter', w:'Real life: a risk register with named owners and deadlines.'},
  {k:'r', t:'Cracks in the walls: 97% filled in a month', w:'Real life: a report from the systems showing security fixes applied on time.'}
 ];
-var PHONE = {k:'p', t:'Strange noise? Call the Authority', w:'When in doubt, consult the Authority. Always the right call.'};
+var PHONE = {k:'p', t:'Strange noise? Call the Authority', w:'When in doubt, consult the Authority. Calling early buys you time to get it right.'};
 
 // ---------- game state ----------
 var GAME_MS = 45000, HOLES = 6;
 var field = document.getElementById('field'), panel = document.getElementById('panel');
-var holes = [], pool = [], running = false, t0 = 0, spawnTimer = null, clock = null;
+var holes = [], pool = [], running = false, t0 = 0, spawnTimer = null, clock = null, slowUntil = 0;
 var score, combo, mult, stats, mistakes;
 
 for (var n=0; n<HOLES; n++){
@@ -209,8 +210,9 @@ function draw(){
   return pool.pop();
 }
 function progress(){ return Math.min(1, (Date.now()-t0)/GAME_MS); }
-function life(){ return 3000 - 1100*progress(); }       // how long a file stays up
-function gap(){ return 1150 - 450*progress(); }         // time between files
+function slow(){ return Date.now() < slowUntil ? 1.7 : 1; }
+function life(){ return (3000 - 1100*progress())*slow(); }       // how long a file stays up
+function gap(){ return (1150 - 450*progress())*slow(); }         // time between files
 function maxUp(){ return progress() < 0.3 ? 2 : 3; }
 
 function hud(){
@@ -289,9 +291,12 @@ function whack(h){
     float(h, '-15', 'bad');
     h.el.classList.add('shake','flash'); setTimeout(function(){ h.el.classList.remove('shake','flash'); }, 450);
   } else {
-    combo++; score += 25; stats.called++;
-    reveal(h, 'phone', 'RIGHT CALL', 'good');
-    float(h, '+25', 'gold'); puff(h, ['#f6c344','#e8731c','#ffffff']);
+    combo++; score += 10; stats.called++;
+    var bonus;
+    if (Math.random() < 0.5){ t0 += 5000; bonus = '+5 SECONDS'; }
+    else { slowUntil = Date.now() + 6000; bonus = 'SLOW-MO'; }
+    reveal(h, 'phone', bonus, 'good');
+    float(h, bonus, 'gold'); puff(h, ['#f6c344','#e8731c','#ffffff']);
   }
   hud(); clearHole(h, 700);
 }
@@ -323,12 +328,13 @@ function escape(h){
 function tick(){
   var left = Math.max(0, GAME_MS - (Date.now()-t0));
   document.getElementById('time').textContent = Math.ceil(left/1000);
-  document.getElementById('bar').style.width = (left/GAME_MS*100)+'%';
+  document.getElementById('bar').style.width = Math.min(100, left/GAME_MS*100)+'%';
+  field.classList.toggle('slow', running && Date.now() < slowUntil);
   if (left <= 0) end();
 }
 
 function start(){
-  score = 0; combo = 0; mult = 1; mistakes = [];
+  score = 0; combo = 0; mult = 1; mistakes = []; slowUntil = 0; field.classList.remove('slow');
   stats = {caught:0, escaped:0, wrongWhack:0, accepted:0, called:0, missedCall:0};
   holes.forEach(function(h){ clearTimeout(h.timer); h.pit.innerHTML = ''; h.item = null; h.done = true; });
   document.getElementById('decoder').textContent = 'Read each label. The real-life meaning appears here after you make your call.';
@@ -382,7 +388,7 @@ panel.innerHTML = '<div class="box">'+
     art('sheet', 34)+'<span>Files climb out of the graves <b>under a sheet</b>. Read each label.</span>'+
     art('ghost', 34)+'<span><b>Ghost evidence?</b> A promise, a plan or a "trust us". <b>Whack it!</b></span>'+
     art('pumpkin', 34)+'<span><b>Real evidence?</b> Proof that something works. <b>Leave it alone</b>, or you lose points.</span>'+
-    art('phone', 34)+'<span><b>Golden phone?</b> Hit it. A company that is unsure should always call us.</span>'+
+    art('phone', 34)+'<span><b>Golden phone?</b> Hit it for <b>extra time</b> or <b>slow motion</b>. Calling us early always buys time.</span>'+
   '</div>'+
   '<p class="why" style="margin:10px 0 0">After each call, the bar under the graveyard tells you what the spooky label means in real life.</p>'+
   '<button class="btn" id="go">Start: 45 seconds</button></div>';
